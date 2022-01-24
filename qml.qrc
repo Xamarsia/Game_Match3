@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>Background.qml</file>
+        <file>Cell.qml</file>
+        <file>Board.qml</file>
+        <file>Header.qml</file>
+        <file>NewGameButton.qml</file>
+    </qresource>
+</RCC>
