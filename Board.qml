@@ -27,7 +27,9 @@ Rectangle {
         id: boardModel
         onMove: {
             root.doneMoving()
-
+        }
+        onNoStepsAvailable: {
+            console.log("noStepsAvailable");
         }
     }
 

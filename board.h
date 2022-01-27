@@ -38,11 +38,13 @@ public:
 signals:
     void win();
     void move();
+    void noStepsAvailable();
 
 private:
-    const int rowsCount {7};
-    const int columnsCount {5};
+    const int rowsCount {3};
+    const int columnsCount {3};
 
+    bool checkStepsAvailable() const;
     bool threeBeforeVerticalMove(const int firstIndex, const int secondIndex) const ;
     bool threeInColumnBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
     bool threeInColumnForFirstIndexBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
