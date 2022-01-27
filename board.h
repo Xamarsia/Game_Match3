@@ -9,18 +9,20 @@ public:
     Board(QObject *parent = 0);
 
     enum BoardRoles {
-        ColorRole = Qt::UserRole + 1
+        ColorRole = Qt::UserRole + 1,
+        VisibleRole
     };
 
     struct Cell {
         QColor color{};
+        bool visible{};
     };
 
     Q_INVOKABLE void newGame();
     Q_INVOKABLE bool takeStep(const int firstIndex,const int secondIndex);
 
-    Q_INVOKABLE int row() { return rowsCount; }
-    Q_INVOKABLE int column() { return columnsCount; }
+    Q_INVOKABLE int row() const { return rowsCount; }
+    Q_INVOKABLE int column() const { return columnsCount; }
     Q_INVOKABLE void remove(int row);
 
     QHash<int, QByteArray> roleNames() const override;
@@ -35,14 +37,29 @@ public:
 
 signals:
     void win();
+    void move();
 
 private:
+    const int rowsCount {7};
+    const int columnsCount {5};
 
-    int rowsCount {4};
-    int columnsCount {4};
+    bool threeBeforeVerticalMove(const int firstIndex, const int secondIndex) const ;
+    bool threeInColumnBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
+    bool threeInColumnForFirstIndexBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
 
-    int getRow(int index, int rowsCount, int columnsCount);
-    int getColumn(int index, int rowsCount, int columnsCount);
+    bool threeInRowBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
+    bool threeInRowForFirstIndexBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
+
+    bool threeBeforeHorizontalMove(const int firstIndex, const int secondIndex) const ;
+
+    bool threeInRowBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
+    bool threeInRowForFirstIndexBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
+
+    bool threeInColumnBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
+    bool threeInColumnForFirstIndexBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
+
+    int getRow(int index, int rowsCount,int columns) const;
+    int getColumn(int index, int rowsCount,int columnsCount) const;
 
     void moveEmptyItemDown(const int firstIndex);
     void moveEmptyItemLeft(const int firstIndex);
@@ -52,9 +69,7 @@ private:
     QHash<int, QByteArray> m_roleNames;
     QVector<Cell> m_cells;
     QVector<QColor> m_colors = {QColor("cyan"), QColor("magenta"), QColor("red"),
-                          QColor("darkRed"), QColor("darkCyan"), QColor("darkMagenta"),
-                          QColor("green"), QColor("darkGreen"), QColor("yellow"),
-                          QColor("blue")};
+                          QColor("green"), QColor("yellow"), QColor("blue")};
 };
 
 

@@ -1,10 +1,11 @@
 #include "board.h"
-//#include <iostream>
 #include <QRandomGenerator>
 #include <QtMath>
+#include <QDebug>
 
 Board::Board(QObject *parent) : QAbstractListModel(parent) {
     m_roleNames[ColorRole] = "color";
+    m_roleNames[VisibleRole]  = "visible";
 
     insertRows(0, rowsCount * columnsCount, QModelIndex());
     newGame();
@@ -44,6 +45,8 @@ QVariant Board::data(const QModelIndex &index, int role) const {
     switch(role) {
         case ColorRole:
             return cell.color;
+        case VisibleRole:
+            return cell.visible;
     }
     return QVariant();
 }
@@ -59,6 +62,10 @@ bool Board::setData(const QModelIndex &index, const QVariant &value, int role) {
     switch(role){
         case ColorRole:
             cell.color = value.toString();
+            emit dataChanged(index, index, { role });
+            return true;
+        case VisibleRole:
+            cell.visible = value.toBool();
             emit dataChanged(index, index, { role });
             return true;
     }
@@ -115,10 +122,10 @@ void  Board::newGame() {
 }
 
 void Board::moveEmptyItemDown(int firstIndex) {
-    if(firstIndex + columnsCount < (rowsCount * columnsCount)) {
+    if(firstIndex + columnsCount < rowsCount * columnsCount){
         moveRow(QModelIndex(), firstIndex, QModelIndex(), firstIndex + (columnsCount));
         moveRow(QModelIndex(), firstIndex + columnsCount, QModelIndex(), firstIndex);
-        //firstIndex = firstIndex + columnsCount;
+        emit move();
     }
 }
 
@@ -127,7 +134,7 @@ void Board::moveEmptyItemLeft(int firstIndex) {
         moveRow(QModelIndex(), firstIndex - 1, QModelIndex(), firstIndex + 1);
         moveRow(QModelIndex(), firstIndex - 1, QModelIndex(), firstIndex + 1);
         moveRow(QModelIndex(), firstIndex - 1, QModelIndex(), firstIndex + 1);
-        //firstIndex = firstIndex - 1;
+        emit move();
     }
 }
 
@@ -136,7 +143,7 @@ void Board::moveEmptyItemRight(int firstIndex) {
         moveRow(QModelIndex(), firstIndex + 1, QModelIndex(), firstIndex);
         moveRow(QModelIndex(), firstIndex + 1, QModelIndex(), firstIndex);
         moveRow(QModelIndex(), firstIndex + 1, QModelIndex(), firstIndex);
-        //firstIndex = firstIndex + 1;
+        emit move();
     }
 }
 
@@ -144,22 +151,210 @@ void Board::moveEmptyItemUp(int firstIndex) {
     if(firstIndex - columnsCount >= 0) {
         moveRow(QModelIndex(), firstIndex, QModelIndex(), firstIndex - (columnsCount - 1));
         moveRow(QModelIndex(), firstIndex - columnsCount, QModelIndex(), firstIndex + 1);
-        //firstIndex = firstIndex - columnsCount;
+        emit move();
     }
 }
 
-int Board::getColumn(int index, int rowsCount, int columnsCount) {
+int Board::getColumn(const int index, const int rowsCount, const int columnsCount) const{
     if(index > ((rowsCount*columnsCount)-1) || index < 0) {
         return -1;
     }
     return index % columnsCount;
 }
 
-int Board::getRow(int index, int rowsCount, int columnsCount) {
+int Board::getRow(const int index, const int rowsCount, const int columnsCount) const {
     if(index > ((rowsCount*columnsCount)-1) || index < 0) {
         return -1;
     }
     return (index / columnsCount) | 0;
+}
+
+bool Board::threeInRowBeforeHorizontalMove(const int firstIndex, const int secondIndex) const {
+    bool firstClick = threeInRowForFirstIndexBeforeHorizontalMove(firstIndex, secondIndex);
+    bool secondClick = threeInRowForFirstIndexBeforeHorizontalMove(secondIndex, firstIndex);
+
+    return firstClick || secondClick;
+}
+
+bool Board::threeInRowForFirstIndexBeforeHorizontalMove(const int firstIndex, const int secondIndex) const {
+    int firstColors = 1;
+    QColor color = m_cells[firstIndex].color;
+
+    for(int i = secondIndex; i + columnsCount < m_cells.size(); i += columnsCount) {
+        if(m_cells[i + columnsCount].color == color) {
+            ++firstColors;
+        } else {
+            break;
+        }
+    }
+
+    for(int j = secondIndex; j - columnsCount >= 0; j -= columnsCount) {
+        if(m_cells[j - columnsCount].color == color) {
+            ++firstColors;
+        } else {
+            break;
+        }
+    }
+
+    return firstColors > 2;
+}
+
+bool Board::threeInColumnBeforeHorizontalMove(const int firstIndex, const int secondIndex) const {
+    bool firstClick = threeInColumnForFirstIndexBeforeHorizontalMove(firstIndex, secondIndex);
+    bool secondClick = threeInColumnForFirstIndexBeforeHorizontalMove(secondIndex, firstIndex);
+
+    return firstClick || secondClick;
+}
+
+bool Board::threeInColumnForFirstIndexBeforeHorizontalMove(const int firstIndex, const int secondIndex) const {
+    int column = getColumn(firstIndex, rowsCount, columnsCount);
+
+    QColor color = QColor(m_cells[firstIndex].color);
+    int colors = 1;
+    if(firstIndex < secondIndex) {
+        for(int i = column + 2, j = secondIndex; i < columnsCount; ++i, ++j) {
+            if(m_cells[j + 1].color == color) {
+                ++colors;
+            } else {
+                break;
+            }
+        }
+        for(int i = column, j = firstIndex; i > 0; --i, --j) {
+            if(i == column){
+                if(m_cells[secondIndex].color == color)
+                {
+                    ++colors;
+                } else {
+                    break;
+                }
+
+            } else if(m_cells[j - 1].color == color) {
+                ++colors;
+            } else {
+                break;
+            }
+        }
+    } else {
+        for(int i = column, j = firstIndex; i < columnsCount; ++i, ++j) {
+            if(i == column) {
+                if(m_cells[secondIndex].color == color)
+                {
+                    ++colors;
+                } else {
+                    break;
+                }
+            } else if(m_cells[j + 1].color == color) {
+                ++colors;
+            } else {
+                break;
+            }
+        }
+        for(int i = column - 1, j = secondIndex; i > 0; --i, --j) {
+            if(m_cells[j - 1].color == color) {
+                ++colors;
+            } else {
+                break;
+            }
+        }
+    }
+    return colors > 2;
+}
+
+bool Board::threeInColumnBeforeVerticalMove(const int firstIndex, const int secondIndex) const {
+    bool firstClick = threeInColumnForFirstIndexBeforeVerticalMove(firstIndex, secondIndex);
+    bool secondClick = threeInColumnForFirstIndexBeforeVerticalMove(secondIndex, firstIndex);
+
+    return firstClick || secondClick;
+}
+
+bool Board::threeInColumnForFirstIndexBeforeVerticalMove(const int firstIndex, const int secondIndex) const {
+    int column = getColumn(firstIndex, rowsCount, columnsCount);
+
+    QColor color = QColor(m_cells[firstIndex].color);
+    int colors = 1;
+    for(int i = column, j = secondIndex; i < columnsCount; ++i, ++j) {
+        if(m_cells[j + 1].color == color) {
+            ++colors;
+        } else {
+            break;
+        }
+    }
+    for(int i = column, j = secondIndex; i > 0; --i, --j) {
+        if(m_cells[j - 1].color == color) {
+                ++colors;
+        } else {
+            break;
+        }
+    }
+    return colors > 2;
+}
+
+bool Board::threeInRowBeforeVerticalMove(const int firstIndex, const int secondIndex) const {
+    bool firstClick = threeInRowForFirstIndexBeforeVerticalMove(firstIndex, secondIndex);
+    bool secondClick = threeInRowForFirstIndexBeforeVerticalMove(secondIndex, firstIndex);
+
+    return firstClick || secondClick;
+}
+bool Board::threeInRowForFirstIndexBeforeVerticalMove(const int firstIndex, const int secondIndex) const {
+    int colors = 1;
+    QColor color = m_cells[firstIndex].color;
+
+    if(firstIndex < secondIndex) {
+        for(int i = firstIndex - columnsCount; i >= 0; i -= columnsCount) {
+            if(i == firstIndex - columnsCount) {
+                if(m_cells[secondIndex].color == color) {
+                    ++colors;
+                } else {
+                    break;
+                }
+            } else if(m_cells[i].color == color) {
+                ++colors;
+            } else {
+                break;
+            }
+        }
+        for(int i = secondIndex + columnsCount; i < m_cells.size(); i += columnsCount) {
+            if(m_cells[i].color == color) {
+                ++colors;
+            } else {
+                break;
+            }
+        }
+    } else if (secondIndex < firstIndex){
+        for(int i = secondIndex - columnsCount; i >= 0; i -= columnsCount) {
+            if(m_cells[i].color == color) {
+                ++colors;
+            } else {
+                break;
+            }
+        }
+        for(int i = firstIndex + columnsCount; i < m_cells.size(); i += columnsCount) {
+            if(i == firstIndex + columnsCount) {
+                if(m_cells[secondIndex].color == color) {
+                    ++colors;
+                } else {
+                    break;
+                }
+            } else if(m_cells[i].color == color) {
+                ++colors;
+            } else {
+                break;
+            }
+        }
+    }
+    return colors > 2;
+}
+
+bool Board::threeBeforeVerticalMove(const int firstIndex, const int secondIndex) const {
+    bool threeIncolumn =  threeInColumnBeforeVerticalMove(firstIndex, secondIndex);
+    bool threeInRow = threeInRowBeforeVerticalMove(firstIndex, secondIndex);
+    return threeIncolumn || threeInRow;
+}
+
+bool Board::threeBeforeHorizontalMove(const int firstIndex, const int secondIndex) const {
+    bool threeInRow = threeInRowBeforeHorizontalMove(firstIndex, secondIndex);
+    bool threeIncolumn = threeInColumnBeforeHorizontalMove(firstIndex, secondIndex);
+    return (threeInRow || threeIncolumn);
 }
 
 bool Board::takeStep(int firstIndex, int secondIndex){
@@ -167,14 +362,18 @@ bool Board::takeStep(int firstIndex, int secondIndex){
     int columnDistance = getColumn(secondIndex, rowsCount, columnsCount) - getColumn(firstIndex, rowsCount, columnsCount);
 
     if( qFabs(rowDistance) == 1 && columnDistance == 0) {
-        if(getRow(secondIndex, rowsCount, columnsCount) < getRow(firstIndex, rowsCount, columnsCount)) {
+        if(!threeBeforeVerticalMove(firstIndex, secondIndex)) {
+            return 0;
+        } else if(getRow(secondIndex, rowsCount, columnsCount) < getRow(firstIndex, rowsCount, columnsCount)) {
             moveEmptyItemUp(firstIndex);
         } else {
             moveEmptyItemDown(firstIndex);
         }
         return 1;
-    } else if( qFabs(columnDistance) == 1 && rowDistance == 0 ) {
-        if(getColumn(secondIndex, rowsCount, columnsCount) < getColumn(firstIndex, rowsCount, columnsCount)) {
+    } else if( qFabs(columnDistance) == 1 && rowDistance == 0) {
+        if(!threeBeforeHorizontalMove(firstIndex, secondIndex)) {
+            return 0;
+        } else if(getColumn(secondIndex, rowsCount, columnsCount) < getColumn(firstIndex, rowsCount, columnsCount)) {
             moveEmptyItemLeft(firstIndex);
         } else {
             moveEmptyItemRight(firstIndex);

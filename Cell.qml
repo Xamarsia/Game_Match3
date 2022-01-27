@@ -1,15 +1,16 @@
 import QtQuick 2.0
 import QtGraphicalEffects 1.15
 
+
+
 Rectangle {
     id: root
 
     property alias circleColor: circle.color
+    property alias circleMargins: circle.anchors.margins
     signal itemClicked();
 
     color: "#00ffffff"
-    width:  110
-    height: 110
 
     MouseArea {
         anchors.fill: parent

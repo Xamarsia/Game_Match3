@@ -6,8 +6,8 @@ import QtQuick.Layouts 1.15
 Window {
     id: root;
 
-    width: 500
-    height: 600
+    minimumWidth: 500
+    minimumHeight: 600
     visible: true
     title: qsTr("Game of Fifteen")
 
@@ -19,18 +19,25 @@ Window {
             spacing: 2
 
             Header {
+                id: header
+
                 Layout.alignment: Qt.AlignHCenter
                 moveText: "0"
                 scoreText: "0"
                 onNewGame: {
                     board.openNewGame()
+                    moveText = "0"
+                    scoreText = "0"
                 }
             }
 
             Board {
                 id: board
-                Layout.fillWidth: true
-                Layout.fillHeight: true
+
+                Layout.alignment: Qt.AlignHCenter
+                onDoneMoving: {
+                    ++header.moveText
+                }
             }
         }
     }
