@@ -15,7 +15,7 @@ public:
 
     struct Cell {
         QColor color{};
-        bool visible{};
+        bool visible{true};
     };
 
     Q_INVOKABLE void newGame();
@@ -24,6 +24,8 @@ public:
     Q_INVOKABLE int row() const { return rowsCount; }
     Q_INVOKABLE int column() const { return columnsCount; }
     Q_INVOKABLE void remove(int row);
+    Q_INVOKABLE void moveInvisibleItemTop(int index);
+    Q_INVOKABLE void setRandomColor(const int cellIndex);
 
     QHash<int, QByteArray> roleNames() const override;
 
@@ -39,10 +41,20 @@ signals:
     void win();
     void move();
     void noStepsAvailable();
+    void treeInRow(int points);
 
 private:
-    const int rowsCount {3};
-    const int columnsCount {3};
+    const int rowsCount {7};
+    const int columnsCount {5};
+    int points;
+
+    QVector<QVector<int>> threeInColumnAfterMove(const int index) const;
+    QVector<QVector<int>> threeInRowAfterMove(const int index) const;
+
+
+
+    void threeAfterHorizontalMove(const int firstIndex, const int secondIndex);
+    void threeAfterVerticalMove(const int firstIndex, const int secondIndex);
 
     bool checkStepsAvailable() const;
     bool threeBeforeVerticalMove(const int firstIndex, const int secondIndex) const ;
@@ -60,13 +72,10 @@ private:
     bool threeInColumnBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
     bool threeInColumnForFirstIndexBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
 
-    int getRow(int index, int rowsCount,int columns) const;
-    int getColumn(int index, int rowsCount,int columnsCount) const;
-
-    void moveEmptyItemDown(const int firstIndex);
-    void moveEmptyItemLeft(const int firstIndex);
-    void moveEmptyItemRight(const int firstIndex);
-    void moveEmptyItemUp(const int firstIndex);
+    void moveItemDown(const int index);
+    void moveItemLeft(const int index);
+    void moveItemRight(const int index);
+    void moveItemUp(const int index);
 
     QHash<int, QByteArray> m_roleNames;
     QVector<Cell> m_cells;

@@ -1,8 +1,6 @@
 import QtQuick 2.0
 import QtGraphicalEffects 1.15
 
-
-
 Rectangle {
     id: root
 
@@ -11,6 +9,13 @@ Rectangle {
     signal itemClicked();
 
     color: "#00ffffff"
+
+    Behavior on visible {
+        SequentialAnimation {
+            PauseAnimation { duration: 500 }
+            NumberAnimation { properties: "visible"; duration: 1000 }
+        }
+    }
 
     MouseArea {
         anchors.fill: parent

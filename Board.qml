@@ -11,6 +11,7 @@ Rectangle {
     property int cellSize: 110
 
     signal doneMoving()
+    signal addPoints(int points)
     signal openNewGame()
 
     onOpenNewGame: {
@@ -29,7 +30,10 @@ Rectangle {
             root.doneMoving()
         }
         onNoStepsAvailable: {
-            console.log("noStepsAvailable");
+            console.log("noStepsAvailable")
+        }
+        onTreeInRow: {
+            root.addPoints(points)
         }
     }
 
@@ -44,24 +48,35 @@ Rectangle {
             interactive: false
             clip: true
             model: boardModel
-
             anchors.fill: parent
             anchors.margins: 5
-
             cellHeight: height / boardModel.row()
             cellWidth: width / boardModel.column()
 
             move: Transition {
-                NumberAnimation { properties: "x"; duration: 500; property: "visible"}
-                NumberAnimation { properties: "y"; duration: 500 ; property: "visible"}
+                SequentialAnimation {
+                    NumberAnimation { properties: "x, y"; duration: 500 }
+                    PauseAnimation { duration: 1500 }
+                }
             }
 
             delegate: Cell {
                 id: cell
-                width:  cellSize
+
+                width: cellSize
                 height: width
 
                 circleColor: model.color
+                visible: model.visible
+
+                onVisibleChanged: {
+                    if(visible) {
+                    } else {
+                        boardModel.moveInvisibleItemTop(index);
+                        boardModel.setRandomColor(index);
+                        visible = "true"
+                    }
+                }
 
                 onItemClicked: {
                     if(firstIndex == -1) {
@@ -70,14 +85,12 @@ Rectangle {
                     } else if (secondIndex == -1) {
                         cell.state = "PRESSED"
                         secondIndex = index
+                        var delegateInstance = grid.itemAtIndex(firstIndex);
 
-                        if(boardModel.takeStep(firstIndex, secondIndex)) {
-                            var delegateInstance = grid.itemAtIndex(firstIndex);
-
+                        if(boardModel.takeStep(firstIndex, secondIndex)) { 
                             delegateInstance.state = "RELEASED"
                             cell.state = "RELEASED"
                         } else {
-                            var delegateInstance = grid.itemAtIndex(firstIndex);
                             delegateInstance.state = "JUMP"
                             cell.state = "JUMP"
                         }

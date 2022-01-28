@@ -1,4 +1,6 @@
 #include "board.h"
+#include "common.h"
+
 #include <QRandomGenerator>
 #include <QtMath>
 #include <QDebug>
@@ -118,16 +120,27 @@ void  Board::newGame() {
     for(int i = 0; i < rowsCount * columnsCount; i++) {
         int colorIndex = QRandomGenerator::global()->generate() % m_colors.size();
         setData(index(i, 0), m_colors[colorIndex], ColorRole);
+        setData(index(i, 0), true, VisibleRole);
     }
     if(!checkStepsAvailable()) {
         emit noStepsAvailable();
     }
+    points = 0;
 }
 
-void Board::moveEmptyItemDown(int firstIndex) {
-    if(firstIndex + columnsCount < rowsCount * columnsCount){
-        moveRow(QModelIndex(), firstIndex, QModelIndex(), firstIndex + (columnsCount));
-        moveRow(QModelIndex(), firstIndex + columnsCount, QModelIndex(), firstIndex);
+void Board::moveInvisibleItemTop(const int index) {
+    int column = getColumn(index, rowsCount, columnsCount);
+    int row = getRow(index, rowsCount, columnsCount);
+
+    for(int i = row; i > 0; --i) {
+        moveItemUp((i * columnsCount) + column);
+    }
+}
+
+void Board::moveItemDown(const int index) {
+    if(index + columnsCount < rowsCount * columnsCount){
+        moveRow(QModelIndex(), index, QModelIndex(), index + (columnsCount));
+        moveRow(QModelIndex(), index + columnsCount, QModelIndex(), index);
         emit move();
         if(!checkStepsAvailable()) {
             emit noStepsAvailable();
@@ -135,11 +148,11 @@ void Board::moveEmptyItemDown(int firstIndex) {
     }
 }
 
-void Board::moveEmptyItemLeft(int firstIndex) {
-    if((firstIndex) % columnsCount != 0) {
-        moveRow(QModelIndex(), firstIndex - 1, QModelIndex(), firstIndex + 1);
-        moveRow(QModelIndex(), firstIndex - 1, QModelIndex(), firstIndex + 1);
-        moveRow(QModelIndex(), firstIndex - 1, QModelIndex(), firstIndex + 1);
+void Board::moveItemLeft(const int index) {
+    if((index) % columnsCount != 0) {
+        moveRow(QModelIndex(), index - 1, QModelIndex(), index + 1);
+        moveRow(QModelIndex(), index - 1, QModelIndex(), index + 1);
+        moveRow(QModelIndex(), index - 1, QModelIndex(), index + 1);
         emit move();
         if(!checkStepsAvailable()) {
             emit noStepsAvailable();
@@ -147,11 +160,11 @@ void Board::moveEmptyItemLeft(int firstIndex) {
     }
 }
 
-void Board::moveEmptyItemRight(int firstIndex) {
-    if((firstIndex+1) % columnsCount != 0) {
-        moveRow(QModelIndex(), firstIndex + 1, QModelIndex(), firstIndex);
-        moveRow(QModelIndex(), firstIndex + 1, QModelIndex(), firstIndex);
-        moveRow(QModelIndex(), firstIndex + 1, QModelIndex(), firstIndex);
+void Board::moveItemRight(const int index) {
+    if((index+1) % columnsCount != 0) {
+        moveRow(QModelIndex(), index + 1, QModelIndex(), index);
+        moveRow(QModelIndex(), index + 1, QModelIndex(), index);
+        moveRow(QModelIndex(), index + 1, QModelIndex(), index);
         emit move();
         if(!checkStepsAvailable()) {
             emit noStepsAvailable();
@@ -159,29 +172,15 @@ void Board::moveEmptyItemRight(int firstIndex) {
     }
 }
 
-void Board::moveEmptyItemUp(int firstIndex) {
-    if(firstIndex - columnsCount >= 0) {
-        moveRow(QModelIndex(), firstIndex, QModelIndex(), firstIndex - (columnsCount - 1));
-        moveRow(QModelIndex(), firstIndex - columnsCount, QModelIndex(), firstIndex + 1);
+void Board::moveItemUp(const int index) {
+    if(index - columnsCount >= 0) {
+        moveRow(QModelIndex(), index, QModelIndex(), index - (columnsCount - 1));
+        moveRow(QModelIndex(), index - columnsCount, QModelIndex(), index + 1);
         emit move();
         if(!checkStepsAvailable()) {
             emit noStepsAvailable();
         }
     }
-}
-
-int Board::getColumn(const int index, const int rowsCount, const int columnsCount) const{
-    if(index > ((rowsCount*columnsCount)-1) || index < 0) {
-        return -1;
-    }
-    return index % columnsCount;
-}
-
-int Board::getRow(const int index, const int rowsCount, const int columnsCount) const {
-    if(index > ((rowsCount*columnsCount)-1) || index < 0) {
-        return -1;
-    }
-    return (index / columnsCount) | 0;
 }
 
 bool Board::threeInRowBeforeHorizontalMove(const int firstIndex, const int secondIndex) const {
@@ -296,7 +295,7 @@ bool Board::threeInColumnForFirstIndexBeforeVerticalMove(const int firstIndex, c
     }
     for(int i = column, j = secondIndex; i > 0; --i, --j) {
         if(m_cells[j - 1].color == color) {
-                ++colors;
+            ++colors;
         } else {
             break;
         }
@@ -310,6 +309,7 @@ bool Board::threeInRowBeforeVerticalMove(const int firstIndex, const int secondI
 
     return firstClick || secondClick;
 }
+
 bool Board::threeInRowForFirstIndexBeforeVerticalMove(const int firstIndex, const int secondIndex) const {
     int colors = 1;
     QColor color = m_cells[firstIndex].color;
@@ -377,6 +377,59 @@ bool Board::checkStepsAvailable() const {
     return false;
 }
 
+QVector<QVector<int>> Board::threeInRowAfterMove(const int index) const {
+    int column = getColumn(index, rowsCount, columnsCount);
+
+    QColor color = m_cells[column].color;
+
+    QVector<QVector<int>> threeInRow;
+    QVector<int> indexes = {column};
+
+    for(int i = 1; i < rowsCount; ++i) {
+        if(m_cells[(i * columnsCount) + column].color == color) {
+            indexes.append((i * columnsCount) + column);
+        } else {
+            if(indexes.size() > 2) {
+                threeInRow.append(indexes);
+            }
+            indexes.clear();
+            indexes.append((i * columnsCount) + column);
+            color = m_cells[(i * columnsCount) + column].color;
+        }
+    }
+    if(indexes.size() > 2) {
+        threeInRow.append(indexes);
+    }
+    return threeInRow;
+}
+
+QVector<QVector<int>> Board::threeInColumnAfterMove(const int index) const {
+    int row = getRow(index, rowsCount, columnsCount);
+    int firstIndexInCurrentRow = row * columnsCount;
+    int firstIndexInNextRow = (row + 1) * columnsCount;
+
+    QColor color = m_cells[firstIndexInCurrentRow].color;
+    QVector<QVector<int>> threeInColumn;
+    QVector<int> indexes = {firstIndexInCurrentRow};
+
+    for(int i = firstIndexInCurrentRow + 1; i < firstIndexInNextRow; i++) {
+        if(m_cells[i].color == color){
+            indexes.append(i);
+        } else {
+            if(indexes.size() > 2) {
+                threeInColumn.append(indexes);
+            }
+            color = m_cells[i].color;
+            indexes.clear();
+            indexes.append(i);
+        }
+    }
+    if(indexes.size() > 2) {
+        threeInColumn.append(indexes);
+    }
+    return threeInColumn;
+}
+
 bool Board::threeBeforeVerticalMove(const int firstIndex, const int secondIndex) const {
     bool threeIncolumn =  threeInColumnBeforeVerticalMove(firstIndex, secondIndex);
     bool threeInRow = threeInRowBeforeVerticalMove(firstIndex, secondIndex);
@@ -389,6 +442,39 @@ bool Board::threeBeforeHorizontalMove(const int firstIndex, const int secondInde
     return (threeInRow || threeIncolumn);
 }
 
+void Board::setRandomColor(const int cellIndex) {
+    int colorIndex = QRandomGenerator::global()->generate() % m_colors.size();
+    setData(index(cellIndex, 0), m_colors[colorIndex], ColorRole);
+    ++points ;
+}
+
+void Board::threeAfterHorizontalMove(const int firstIndex, const int secondIndex) {
+    QVector<QVector<int>> threeInRowVector = threeInColumnAfterMove(firstIndex);
+    threeInRowVector.append(threeInRowAfterMove(firstIndex));
+    threeInRowVector.append(threeInRowAfterMove(secondIndex));
+    for(auto& cellsVector : threeInRowVector) {
+        for(auto& cell : cellsVector) {
+            setData(index(cell, 0), false, VisibleRole);
+            ++points;
+        }
+    }
+    emit treeInRow(points);
+}
+
+void Board::threeAfterVerticalMove(const int firstIndex, const int secondIndex) {
+    QVector<QVector<int>> threeInRowVector = threeInColumnAfterMove(firstIndex);
+    threeInRowVector.append(threeInColumnAfterMove(secondIndex));
+    threeInRowVector.append(threeInRowAfterMove(firstIndex));
+
+    for(auto& cellsVector : threeInRowVector) {
+        for(auto& cell : cellsVector) {
+            setData(index(cell, 0), false, VisibleRole);
+            ++points ;
+        }
+    }
+    emit treeInRow(points);
+}
+
 bool Board::takeStep(int firstIndex, int secondIndex){
     int rowDistance = getRow(secondIndex, rowsCount, columnsCount) - getRow(firstIndex, rowsCount, columnsCount);
     int columnDistance = getColumn(secondIndex, rowsCount, columnsCount) - getColumn(firstIndex, rowsCount, columnsCount);
@@ -397,19 +483,21 @@ bool Board::takeStep(int firstIndex, int secondIndex){
         if(!threeBeforeVerticalMove(firstIndex, secondIndex)) {
             return 0;
         } else if(getRow(secondIndex, rowsCount, columnsCount) < getRow(firstIndex, rowsCount, columnsCount)) {
-            moveEmptyItemUp(firstIndex);
+            moveItemUp(firstIndex);
         } else {
-            moveEmptyItemDown(firstIndex);
+            moveItemDown(firstIndex);
         }
+        threeAfterVerticalMove(firstIndex, secondIndex);
         return 1;
     } else if( qFabs(columnDistance) == 1 && rowDistance == 0) {
         if(!threeBeforeHorizontalMove(firstIndex, secondIndex)) {
             return 0;
         } else if(getColumn(secondIndex, rowsCount, columnsCount) < getColumn(firstIndex, rowsCount, columnsCount)) {
-            moveEmptyItemLeft(firstIndex);
+            moveItemLeft(firstIndex);
         } else {
-            moveEmptyItemRight(firstIndex);
+            moveItemRight(firstIndex);
         }
+        threeAfterHorizontalMove(firstIndex, secondIndex);
         return 1;
     }
     return 0;
