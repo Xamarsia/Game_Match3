@@ -26,6 +26,11 @@ public:
     Q_INVOKABLE void remove(int row);
     Q_INVOKABLE void moveInvisibleItemTop(int index);
     Q_INVOKABLE void setRandomColor(const int cellIndex);
+    Q_INVOKABLE void setVisible(const int cellIndex, bool visible);
+    Q_INVOKABLE int getRow(const int index) const;
+    Q_INVOKABLE bool clearAllMatches();
+
+    int getColumn(const int index) const;
 
     QHash<int, QByteArray> roleNames() const override;
 
@@ -33,8 +38,8 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role) override;
     bool moveRows(const QModelIndex &sourceParent, int sourceRow, int count,
                           const QModelIndex &destinationParent, int destinationChild) override;
-    bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 
 signals:
@@ -50,8 +55,6 @@ private:
 
     QVector<QVector<int>> threeInColumnAfterMove(const int index) const;
     QVector<QVector<int>> threeInRowAfterMove(const int index) const;
-
-
 
     void threeAfterHorizontalMove(const int firstIndex, const int secondIndex);
     void threeAfterVerticalMove(const int firstIndex, const int secondIndex);
@@ -80,7 +83,7 @@ private:
     QHash<int, QByteArray> m_roleNames;
     QVector<Cell> m_cells;
     QVector<QColor> m_colors = {QColor("cyan"), QColor("magenta"), QColor("red"),
-                          QColor("green"), QColor("yellow"), QColor("blue")};
+                          QColor("green"), QColor("yellow")/*, QColor("blue")*/};
 };
 
 

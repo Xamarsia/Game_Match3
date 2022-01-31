@@ -69,15 +69,6 @@ Rectangle {
                 circleColor: model.color
                 visible: model.visible
 
-                onVisibleChanged: {
-                    if(visible) {
-                    } else {
-                        boardModel.moveInvisibleItemTop(index);
-                        boardModel.setRandomColor(index);
-                        visible = "true"
-                    }
-                }
-
                 onItemClicked: {
                     if(firstIndex == -1) {
                         firstIndex = index
@@ -90,6 +81,7 @@ Rectangle {
                         if(boardModel.takeStep(firstIndex, secondIndex)) { 
                             delegateInstance.state = "RELEASED"
                             cell.state = "RELEASED"
+
                         } else {
                             delegateInstance.state = "JUMP"
                             cell.state = "JUMP"
@@ -99,44 +91,6 @@ Rectangle {
                         secondIndex = -1
                     }
                 }
-
-                states: [
-                    State {
-                        name: "PRESSED"
-                        PropertyChanges { target: cell; circleMargins: 15;}
-                    },
-                    State {
-                        name: "RELEASED"
-                        PropertyChanges { target: cell; circleMargins: 3;}
-                    },
-                    State {
-                        name: "JUMP"
-                        PropertyChanges { target: cell; circleMargins: 3;}
-                    }
-                ]
-
-                transitions: [
-                    Transition {
-                        from: "PRESSED"
-                        to: "RELEASED"
-                        ColorAnimation { target: cell; duration: 1000}
-                    },
-                    Transition {
-                        from: "RELEASED"
-                        to: "PRESSED"
-                        ColorAnimation { target: cell; duration: 1000}
-                    },
-                    Transition {
-                        from: "PRESSED"
-                        to: "JUMP"
-                        SequentialAnimation {
-                            NumberAnimation { target: cell; property: "circleMargins"; from: 3; to: 15; duration:150}
-                            NumberAnimation { target: cell; property: "circleMargins"; from: 15; to: 3 ; duration: 150}
-                            NumberAnimation { target: cell; property: "circleMargins"; from: 3; to: 15; duration:150}
-                            NumberAnimation { target: cell; property: "circleMargins"; from: 15; to: 3 ; duration: 150}
-                        }
-                    }
-                ]
             }
         } 
     }
