@@ -144,7 +144,6 @@ void Board::moveItemDown(const int index) {
     if(index + columnsCount < rowsCount * columnsCount){
         moveRow(QModelIndex(), index, QModelIndex(), index + (columnsCount));
         moveRow(QModelIndex(), index + columnsCount, QModelIndex(), index);
-        emit move();
         if(!checkStepsAvailable()) {
             emit noStepsAvailable();
         }
@@ -156,7 +155,6 @@ void Board::moveItemLeft(const int index) {
         moveRow(QModelIndex(), index - 1, QModelIndex(), index + 1);
         moveRow(QModelIndex(), index - 1, QModelIndex(), index + 1);
         moveRow(QModelIndex(), index - 1, QModelIndex(), index + 1);
-        emit move();
         if(!checkStepsAvailable()) {
             emit noStepsAvailable();
         }
@@ -168,7 +166,6 @@ void Board::moveItemRight(const int index) {
         moveRow(QModelIndex(), index + 1, QModelIndex(), index);
         moveRow(QModelIndex(), index + 1, QModelIndex(), index);
         moveRow(QModelIndex(), index + 1, QModelIndex(), index);
-        emit move();
         if(!checkStepsAvailable()) {
             emit noStepsAvailable();
         }
@@ -179,7 +176,6 @@ void Board::moveItemUp(const int index) {
     if(index - columnsCount >= 0) {
         moveRow(QModelIndex(), index, QModelIndex(), index - (columnsCount - 1));
         moveRow(QModelIndex(), index - columnsCount, QModelIndex(), index + 1);
-        emit move();
         if(!checkStepsAvailable()) {
             emit noStepsAvailable();
         }
@@ -528,6 +524,7 @@ bool Board::takeStep(int firstIndex, int secondIndex){
             moveItemDown(firstIndex);
         }
         threeAfterVerticalMove(firstIndex, secondIndex);
+        emit move();
         return 1;
     } else if( qFabs(columnDistance) == 1 && rowDistance == 0) {
         if(!threeBeforeHorizontalMove(firstIndex, secondIndex)) {
@@ -538,6 +535,7 @@ bool Board::takeStep(int firstIndex, int secondIndex){
             moveItemRight(firstIndex);
         }
         threeAfterHorizontalMove(firstIndex, secondIndex);
+        emit move();
         return 1;
     }
     return 0;

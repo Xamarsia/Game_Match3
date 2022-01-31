@@ -83,7 +83,7 @@ private:
     QHash<int, QByteArray> m_roleNames;
     QVector<Cell> m_cells;
     QVector<QColor> m_colors = {QColor("cyan"), QColor("magenta"), QColor("red"),
-                          QColor("green"), QColor("yellow")/*, QColor("blue")*/};
+                          QColor("green"), QColor("yellow"), QColor("blue")};
 };
 
 

@@ -35,9 +35,11 @@ Window {
                 id: board
 
                 Layout.alignment: Qt.AlignHCenter
+                onDoneMoving: {
+                    ++header.moveText
+                }
                 onAddPoints: {
                     header.scoreText = points
-                    ++header.moveText
                 }
             }
         }
