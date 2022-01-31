@@ -24,13 +24,20 @@ Rectangle {
     height: boardModel.row() * (10 + cellSize)
     width: boardModel.column() * (10 + cellSize)
 
+    VictoryDialog {
+        id: victoryDialog
+        onResetGame: {
+            boardModel.newGame();
+        }
+    }
+
     BoardModel {
         id: boardModel
         onMove: {
             root.doneMoving()
         }
         onNoStepsAvailable: {
-            console.log("noStepsAvailable")
+            victoryDialog.open()
         }
         onTreeInRow: {
             root.addPoints(points)

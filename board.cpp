@@ -123,10 +123,10 @@ void  Board::newGame() {
         setData(index(i, 0), true, VisibleRole);
     }
     if(!checkStepsAvailable()) {
-        emit noStepsAvailable();
+        newGame();
     }
     if(clearAllMatches()){
-        qDebug() << "true";
+        clearAllMatches();
     }
     points = 0;
 }
@@ -358,8 +358,6 @@ bool Board::threeInRowForFirstIndexBeforeVerticalMove(const int firstIndex, cons
     }
     return colors > 2;
 }
-//const int rowsCount {7};
-//const int columnsCount {5};
 
 bool Board::clearAllMatches() {
     QVector<QVector<int>> matches;

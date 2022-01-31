@@ -6,5 +6,6 @@
         <file>Board.qml</file>
         <file>Header.qml</file>
         <file>NewGameButton.qml</file>
+        <file>VictoryDialog.qml</file>
     </qresource>
 </RCC>
