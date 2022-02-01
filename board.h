@@ -1,6 +1,7 @@
 #pragma once
 #include <QAbstractListModel>
 #include <QColor>
+#include <QJsonObject>
 
 class Board : public QAbstractListModel {
      Q_OBJECT
@@ -25,8 +26,6 @@ public:
     Q_INVOKABLE int column() const { return columnsCount; }
     Q_INVOKABLE void remove(int row);
     Q_INVOKABLE void moveInvisibleItemTop(int index);
-    Q_INVOKABLE void setRandomColor(const int cellIndex);
-    Q_INVOKABLE void setVisible(const int cellIndex, bool visible);
     Q_INVOKABLE int getRow(const int index) const;
     Q_INVOKABLE bool clearAllMatches();
 
@@ -49,9 +48,10 @@ signals:
     void treeInRow(int points);
 
 private:
-    const int rowsCount {7};
-    const int columnsCount {5};
+    int rowsCount {};
+    int columnsCount {};
     int points;
+    QString sourceFile = ":/config.json";
 
     QVector<QVector<int>> threeInColumnAfterMove(const int index) const;
     QVector<QVector<int>> threeInRowAfterMove(const int index) const;
@@ -80,10 +80,12 @@ private:
     void moveItemRight(const int index);
     void moveItemUp(const int index);
 
+    QJsonObject getJsonObject(const QString& sourceFile);
+    void read(const QJsonObject &json);
+
     QHash<int, QByteArray> m_roleNames;
     QVector<Cell> m_cells;
-    QVector<QColor> m_colors = {QColor("cyan"), QColor("magenta"), QColor("red"),
-                          QColor("green"), QColor("yellow"), QColor("blue")};
+    QVector<QColor> m_colors;
 };
 
 

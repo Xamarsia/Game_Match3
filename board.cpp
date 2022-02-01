@@ -3,12 +3,23 @@
 
 #include <QRandomGenerator>
 #include <QtMath>
-#include <QDebug>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonArray>
 
 Board::Board(QObject *parent) : QAbstractListModel(parent) {
     m_roleNames[ColorRole] = "color";
     m_roleNames[VisibleRole]  = "visible";
-
+    read(getJsonObject(sourceFile));
+    if(m_colors.isEmpty()) {
+        m_colors = {QColor("cyan"), QColor("magenta"), QColor("red"), QColor("green"), QColor("yellow"), QColor("blue")};
+    }
+    if(rowsCount < 2) {
+        rowsCount = 4;
+    }
+    if(columnsCount < 2) {
+        columnsCount = 4;
+    }
     insertRows(0, rowsCount * columnsCount, QModelIndex());
     newGame();
 }
@@ -111,7 +122,8 @@ bool Board::insertRows(int row, int count, const QModelIndex &parent) {
     }
 
     beginInsertRows(parent, row, row + count - 1);
-    m_cells.insert(row, count, Cell{});
+    QColor color = QRandomGenerator::global()->generate() % m_colors.size();
+    m_cells.insert(row, count, Cell{{color}, {}});
     endInsertRows();
     return true;
 }
@@ -180,6 +192,40 @@ void Board::moveItemUp(const int index) {
             emit noStepsAvailable();
         }
     }
+}
+void Board::read(const QJsonObject &json)
+{
+    if (json.contains("colors") && json["colors"].isArray()) {
+        QJsonArray npcArray = json["colors"].toArray();
+        m_colors.clear();
+        for (int npcIndex = 0; npcIndex < npcArray.size(); ++npcIndex) {
+            QString color = npcArray[npcIndex].toString();
+            m_colors.append(color);
+        }
+    }
+    if (json.contains("columns") && json["columns"].isDouble())
+        columnsCount = json["columns"].toInt();
+
+    if (json.contains("rows") && json["rows"].isDouble())
+        rowsCount = json["rows"].toInt();
+}
+
+QJsonObject Board::getJsonObject(const QString& sourceFile)
+{
+    QFile loadFile;
+    loadFile.setFileName(sourceFile);
+    if(!loadFile.open(QIODevice::ReadOnly | QIODevice::Text)){
+        qWarning("Couldn't open ':/config.json' file.");
+    }
+
+    QString val;
+    val = loadFile.readAll();
+    loadFile.close();
+
+    QJsonDocument document = QJsonDocument::fromJson(val.toUtf8());
+    QJsonObject jsonObject = document.object();
+
+    return jsonObject;
 }
 
 bool Board::threeInRowBeforeHorizontalMove(const int firstIndex, const int secondIndex) const {
@@ -472,15 +518,6 @@ bool Board::threeBeforeHorizontalMove(const int firstIndex, const int secondInde
     return (threeInRow || threeIncolumn);
 }
 
-void Board::setRandomColor(const int cellIndex) {
-    int colorIndex = QRandomGenerator::global()->generate() % m_colors.size();
-    setData(index(cellIndex, 0), m_colors[colorIndex], ColorRole);
-}
-
-void Board::setVisible(const int cellIndex, bool visible) {
-    setData(index(cellIndex, 0), visible, VisibleRole);
-}
-
 void Board::threeAfterHorizontalMove(const int firstIndex, const int secondIndex) {
     QVector<QVector<int>> threeInRowVector = threeInColumnAfterMove(firstIndex);
     threeInRowVector.append(threeInRowAfterMove(firstIndex));
@@ -488,6 +525,7 @@ void Board::threeAfterHorizontalMove(const int firstIndex, const int secondIndex
     for(auto& cellsVector : threeInRowVector) {
         for(auto& cell : cellsVector) {
             setData(index(cell, 0), false, VisibleRole);
+            moveInvisibleItemTop(cell);
             ++points;
         }
     }
@@ -502,11 +540,11 @@ void Board::threeAfterVerticalMove(const int firstIndex, const int secondIndex) 
     for(auto& cellsVector : threeInRowVector) {
         for(auto& cell : cellsVector) {
             setData(index(cell, 0), false, VisibleRole);
+            moveInvisibleItemTop(cell);
             ++points ;
         }
     }
     emit treeInRow(points);
-
 }
 
 bool Board::takeStep(int firstIndex, int secondIndex){
