@@ -28,9 +28,11 @@ public:
     Q_INVOKABLE void moveInvisibleItemTop(int index);
     Q_INVOKABLE int getRow(const int index) const;
     Q_INVOKABLE bool clearAllMatches();
+    Q_INVOKABLE void setVisible(const int cellIndex, bool visible);
+    Q_INVOKABLE void setRandomColor(const int cellIndex);
+    Q_INVOKABLE void doAllCellsVisible();
 
     int getColumn(const int index) const;
-
     QHash<int, QByteArray> roleNames() const override;
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
@@ -80,6 +82,7 @@ private:
     void moveItemRight(const int index);
     void moveItemUp(const int index);
 
+    bool isDefaultBoard();
     QJsonObject getJsonObject(const QString& sourceFile);
     void read(const QJsonObject &json);
 

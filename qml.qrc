@@ -7,5 +7,6 @@
         <file>Header.qml</file>
         <file>NewGameButton.qml</file>
         <file>VictoryDialog.qml</file>
+        <file>config.json</file>
     </qresource>
 </RCC>

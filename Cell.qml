@@ -11,11 +11,10 @@ Rectangle {
 
     color: "#00ffffff"
 
-    Behavior on visible {
+    Behavior on visible{
         SequentialAnimation {
             PauseAnimation { duration: 500 }
-            NumberAnimation { properties: "visible"; duration: 300 }
-            PauseAnimation { duration: 500 }
+            NumberAnimation { properties: "visible"; duration: 700 }
         }
     }
 
@@ -28,16 +27,17 @@ Rectangle {
             to: (boardModel.getRow(index) * grid.cellHeight);
             duration: (boardModel.getRow(index)) ? (500 / boardModel.getRow(index)) : 600
         }
-        PauseAnimation { duration: 1000 }
+        PauseAnimation { duration: 500 }
     }
 
     onVisibleChanged: {
         if(visible) {
             droppingOut.start()
+            boardModel.doAllCellsVisible();
             boardModel.clearAllMatches()
         } else {
             boardModel.moveInvisibleItemTop(index)
-            boardModel.setRandomColor(index)
+            boardModel.setRandomColor(index);
             boardModel.setVisible(index, true)
         }
     }

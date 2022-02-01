@@ -78,9 +78,12 @@ bool Board::setData(const QModelIndex &index, const QVariant &value, int role) {
             emit dataChanged(index, index, { role });
             return true;
         case VisibleRole:
-            cell.visible = value.toBool();
-            emit dataChanged(index, index, { role });
-            return true;
+            if(cell.visible != value.toBool())
+            {
+                cell.visible = value.toBool();
+                emit dataChanged(index, index, { role });
+                return true;
+            }
     }
     return false;
 }
@@ -128,6 +131,15 @@ bool Board::insertRows(int row, int count, const QModelIndex &parent) {
     return true;
 }
 
+void Board::setRandomColor(const int cellIndex) {
+    int colorIndex = QRandomGenerator::global()->generate() % m_colors.size();
+    setData(index(cellIndex, 0), m_colors[colorIndex], ColorRole);
+}
+
+void Board::setVisible(const int cellIndex, bool visible) {
+    setData(index(cellIndex, 0), visible, VisibleRole);
+}
+
 void  Board::newGame() {
     for(int i = 0; i < rowsCount * columnsCount; i++) {
         int colorIndex = QRandomGenerator::global()->generate() % m_colors.size();
@@ -137,10 +149,28 @@ void  Board::newGame() {
     if(!checkStepsAvailable()) {
         newGame();
     }
-    if(clearAllMatches()){
-        clearAllMatches();
+    if(!isDefaultBoard()){
+        newGame();
     }
     points = 0;
+}
+
+bool Board::isDefaultBoard() {
+    QVector<QVector<int>> matches;
+    bool matchesFound = false;
+    for(int i = 0; i < columnsCount; ++i) {
+        matches = threeInRowAfterMove(i);
+        if (!matches.isEmpty()) {
+            return false;
+        }
+    }
+    for(int i = 0; i < rowsCount; ++i) {
+        matches = threeInColumnAfterMove(i * columnsCount);
+        if (!matches.isEmpty()) {
+            return false;
+        }
+    }
+    return !matchesFound;
 }
 
 void Board::moveInvisibleItemTop(const int index) {
@@ -405,6 +435,14 @@ bool Board::threeInRowForFirstIndexBeforeVerticalMove(const int firstIndex, cons
     return colors > 2;
 }
 
+void Board::doAllCellsVisible() {
+    for(int i = 0; i < columnsCount * rowsCount; ++i) {
+        if(!m_cells[i].visible) {
+            setVisible(i, true);
+        }
+    }
+}
+
 bool Board::clearAllMatches() {
     QVector<QVector<int>> matches;
     bool matchesFound = false;
@@ -525,7 +563,6 @@ void Board::threeAfterHorizontalMove(const int firstIndex, const int secondIndex
     for(auto& cellsVector : threeInRowVector) {
         for(auto& cell : cellsVector) {
             setData(index(cell, 0), false, VisibleRole);
-            moveInvisibleItemTop(cell);
             ++points;
         }
     }
@@ -540,7 +577,6 @@ void Board::threeAfterVerticalMove(const int firstIndex, const int secondIndex) 
     for(auto& cellsVector : threeInRowVector) {
         for(auto& cell : cellsVector) {
             setData(index(cell, 0), false, VisibleRole);
-            moveInvisibleItemTop(cell);
             ++points ;
         }
     }
