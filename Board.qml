@@ -36,9 +36,6 @@ Rectangle {
         onMove: {
             root.doneMoving()
         }
-        onNoStepsAvailable: {
-            victoryDialog.open()
-        }
         onTreeInRow: {
             root.addPoints(points)
         }
@@ -78,24 +75,24 @@ Rectangle {
 
                 onItemClicked: {
                     if(firstIndex == -1) {
-                        firstIndex = index
-                        cell.state = "PRESSED"
+                        firstIndex = index;
+                        cell.state = "PRESSED";
                     } else if (secondIndex == -1) {
-                        cell.state = "PRESSED"
-                        secondIndex = index
+                        cell.state = "PRESSED";
+                        secondIndex = index;
                         var delegateInstance = grid.itemAtIndex(firstIndex);
 
                         if(boardModel.takeStep(firstIndex, secondIndex)) { 
-                            delegateInstance.state = "RELEASED"
-                            cell.state = "RELEASED"
+                            delegateInstance.state = "RELEASED";
+                            cell.state = "RELEASED";
 
                         } else {
-                            delegateInstance.state = "JUMP"
-                            cell.state = "JUMP"
+                            delegateInstance.state = "JUMP";
+                            cell.state = "JUMP";
                         }
 
-                        firstIndex = -1
-                        secondIndex = -1
+                        firstIndex = -1;
+                        secondIndex = -1;
                     }
                 }
             }

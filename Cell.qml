@@ -34,7 +34,10 @@ Rectangle {
         if(visible) {
             droppingOut.start()
             boardModel.doAllCellsVisible();
-            boardModel.clearAllMatches()
+            boardModel.solveAllMatches()
+            if(!boardModel.checkStepsAvailable()) {
+                victoryDialog.open();
+            }
         } else {
             boardModel.moveInvisibleItemTop(index)
             boardModel.setRandomColor(index);

@@ -19,18 +19,20 @@ public:
         bool visible{true};
     };
 
-    Q_INVOKABLE void newGame();
-    Q_INVOKABLE bool takeStep(const int firstIndex,const int secondIndex);
-
     Q_INVOKABLE int row() const { return rowsCount; }
     Q_INVOKABLE int column() const { return columnsCount; }
+    Q_INVOKABLE int getRow(const int index) const;
+    Q_INVOKABLE bool checkStepsAvailable();
+
+    Q_INVOKABLE void newGame();
+    Q_INVOKABLE bool takeStep(const int firstIndex,const int secondIndex);
     Q_INVOKABLE void remove(int row);
     Q_INVOKABLE void moveInvisibleItemTop(int index);
-    Q_INVOKABLE int getRow(const int index) const;
-    Q_INVOKABLE bool clearAllMatches();
     Q_INVOKABLE void setVisible(const int cellIndex, bool visible);
     Q_INVOKABLE void setRandomColor(const int cellIndex);
+    Q_INVOKABLE void solveAllMatches();
     Q_INVOKABLE void doAllCellsVisible();
+
 
     int getColumn(const int index) const;
     QHash<int, QByteArray> roleNames() const override;
@@ -43,10 +45,10 @@ public:
     bool insertRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
     bool removeRows(int row, int count, const QModelIndex &parent = QModelIndex()) override;
 
+
 signals:
     void win();
     void move();
-    void noStepsAvailable();
     void treeInRow(int points);
 
 private:
@@ -55,34 +57,21 @@ private:
     int points;
     QString sourceFile = ":/config.json";
 
-    QVector<QVector<int>> threeInColumnAfterMove(const int index) const;
-    QVector<QVector<int>> threeInRowAfterMove(const int index) const;
+    QVector<QVector<int>> threeInColumnAfterMove(const QVector<Cell>& cells) const;
+    QVector<QVector<int>> threeInRowAfterMove(const QVector<Cell>& cells) const;
+    QVector<QVector<int>> findAllMatches(const QVector<Cell>& cells) const;
 
-    void threeAfterHorizontalMove(const int firstIndex, const int secondIndex);
-    void threeAfterVerticalMove(const int firstIndex, const int secondIndex);
+    bool isAvailableStep(const QVector<Cell>& cells) const;
 
-    bool checkStepsAvailable() const;
-    bool threeBeforeVerticalMove(const int firstIndex, const int secondIndex) const ;
-    bool threeInColumnBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
-    bool threeInColumnForFirstIndexBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
+    void setInvisibleCellAfterMove(const QVector<Cell>& cells);
 
-    bool threeInRowBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
-    bool threeInRowForFirstIndexBeforeVerticalMove(const int firstIndex, const int secondIndex) const;
 
-    bool threeBeforeHorizontalMove(const int firstIndex, const int secondIndex) const ;
-
-    bool threeInRowBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
-    bool threeInRowForFirstIndexBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
-
-    bool threeInColumnBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
-    bool threeInColumnForFirstIndexBeforeHorizontalMove(const int firstIndex, const int secondIndex) const;
 
     void moveItemDown(const int index);
     void moveItemLeft(const int index);
     void moveItemRight(const int index);
     void moveItemUp(const int index);
 
-    bool isDefaultBoard();
     QJsonObject getJsonObject(const QString& sourceFile);
     void read(const QJsonObject &json);
 
